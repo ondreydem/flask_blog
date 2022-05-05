@@ -28,7 +28,7 @@ def before_request():
 def load_user(user_id):
     return User.query.get(user_id)
 
-
+sss
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     next = request.args.get('next')
