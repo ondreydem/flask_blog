@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Log In</h1>
+<form action="/login" , method="POST" , name="login">
+    {{form.hidden_tag()}}
+    <p>Enter your E-mail: {{form.email}}</p>
+    <p>Enter your password: {{form.password}}</p>
+    <p>{{form.remember_me}} Remember me
+    <p><input type="submit" , value="Log In">
+    <hr align=left width="300px">
+    <p><a href="{{url_for('register')}}">Регистрация</a>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Sign In</h1>
+<form action="/register" method="post" name="register">
+    {{form.hidden_tag()}}
+    <p>Please enter your name: {{form.name}}</p>
+    <p>Enter your E-mail: {{form.email}}</p>
+    <p>Enter your date of birth: {{form.date_of_birth}}</p>
+    <p>Enter your password: {{form.password}}</p>
+    <p>Confirm password: {{form.repeat_password}}</p>
+    <p><input type="submit" value="Sign In"></p>
+</form>
+{% endblock %}

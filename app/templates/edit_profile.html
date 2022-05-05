@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Edit profile</h1>
+<form action="" method="POST" name="edit_profile" enctype="multipart/form-data">
+    {{form.hidden_tag()}}
+    <table>
+<!--        <tr>-->
+<!--            <td>Enter your date of birth:</td>-->
+<!--            <td>{{form.date_of_birth}}</td>-->
+<!--        </tr>-->
+        <tr>
+            <td>Update your avatar:</td>
+            <td>
+                <input type="file" name="file">
+            </td>
+        </tr>
+        <tr>
+            <td valign="top">Tell something about yourself:</td>
+            <td>{{form.about (cols = 32, rows = 4)}}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Submit!">
+                <button type="button" onclick="document.location='/profile'">Back to profile</button>
+        </tr>
+    </table>
+    <div></div>
+    <hr align=left width="500px">
+</form>
+{% endblock %}
