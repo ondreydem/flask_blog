@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/index', methods=['POST', 'GET'])
 def index():
+    posts = db.session.query(Post).all()
     return render_template('index.html',
                            user=g.user)
 
@@ -36,15 +37,12 @@ def login():
         return redirect(next or url_for('profile', user_id=g.user.id))
     form = LoginForm()
     if form.validate_on_submit():
-        try:
-            user = User.query.filter_by(email=form.email.data).first()
-            if user is not None and check_password_hash(user.password, form.password.data):
-                login_user(user, remember=form.remember_me.data)
-                return redirect(next or url_for('profile', user_id = user.id))
-            else:
-                flash('Wrong password or user is not exist')
-        except Exception as e:
-            flash(e, 'danger')
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is not None and check_password_hash(user.password, form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect(next or url_for('profile', user_id = user.id))
+        else:
+            flash('Wrong password or user does not exist')
     return render_template('login.html',
                            form=form,
                            p_title='Log In')
@@ -54,21 +52,23 @@ def login():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-
-        for email in db.session.query(User.email).all():
-            if form.email.data in email:
+        try:
+            checked_email = db.session.query(User).filter_by(email=form.email.data).first()
+            if checked_email is not None:
                 flash('User with this email is already exist')
                 return redirect(url_for('register'))
-        else:
-            hashed_psw = generate_password_hash(form.password.data)
-            user = User(nickname=form.name.data,
-                        email=form.email.data,
-                        password=hashed_psw,
-                        date_of_birth=form.date_of_birth.data)
-            db.session.add(user)
-            db.session.commit()
-            return redirect(request.args.get('next') or url_for('login'))
-
+            else:
+                hashed_psw = generate_password_hash(form.password.data)
+                user = User(nickname=form.name.data,
+                            email=form.email.data,
+                            password=hashed_psw,
+                            date_of_birth=form.date_of_birth.data)
+                db.session.add(user)
+                db.session.commit()
+                return redirect(request.args.get('next') or url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
     return render_template('register.html',
                            p_title='Register',
                            form=form)
@@ -113,13 +113,17 @@ def logout():
 @login_required
 def add_post():
     form = PostForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        post = Post(title=form.title.data,
-                    body=form.body.data,
-                    timestamp=datetime.datetime.now(),
-                    user_id=g.user.id)
-        db.session.add(post)
-        db.session.commit()
+    if form.validate_on_submit():
+        try:
+            post = Post(title=form.title.data,
+                        body=form.body.data,
+                        timestamp=datetime.datetime.now(),
+                        user_id=g.user.id)
+            db.session.add(post)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
     return redirect(url_for('profile', user_id=g.user.id))
 
 
@@ -128,21 +132,25 @@ def add_post():
 def edit_profile():
     form = EditProfileForm()
     if form.validate_on_submit():
-        user = User.query.get(g.user.id)
-        if form.about.data:
-            user.about = form.about.data
-        if request.files['file']:
-            file = request.files['file']
-            img = file.read()
-            avatar = sqlite3.Binary(img)
-            user.avatar = avatar
-        db.session.add(g.user)
-        db.session.commit()
-        return redirect(url_for('profile', user_id=user.id))
+        try:
+            user = User.query.get(g.user.id)
+            if form.about.data:
+                user.about = form.about.data
+            if request.files['file']:
+                file = request.files['file']
+                img = file.read()
+                avatar = sqlite3.Binary(img)
+                user.avatar = avatar
+            db.session.add(g.user)
+            db.session.commit()
+            return redirect(url_for('profile', user_id=user.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
     return render_template('edit_profile.html', form=form)
 
 
-@app.route('/profile/subscribe_list')
+@app.route('/profile/<int:user_id>/subscribe_list')
 @login_required
 def subscribe_list():
     pass
@@ -158,19 +166,24 @@ def render_avatar(user_id):
 @app.route('/add_comment', methods=['POST'])
 def add_comment():
     form = CommentForm()
-    if form.validate_on_submit() and request.method == 'POST':
-        post_id = request.form['post_id']
-        post = Post.query.get(post_id)
-        author_id = post.author.id
-        comment = Comments(body=form.body.data,
-                           timestamp=datetime.datetime.now(),
-                           post_id=post_id,
-                           user_id=g.user.id)
-        db.session.add(comment)
-        db.session.commit()
+    if form.validate_on_submit():
+        try:
+            post_id = request.form['post_id']
+            post = Post.query.get(post_id)
+            author_id = post.author.id
+            comment = Comments(body=form.body.data,
+                               timestamp=datetime.datetime.now(),
+                               post_id=post_id,
+                               user_id=g.user.id)
+            db.session.add(comment)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
     return redirect(url_for('profile', user_id=author_id))
 
 
+#so, is it need..?
 @app.route('/post/<int:post_id>')
 def post_page(post_id):
     pass

@@ -69,8 +69,12 @@
 </form>
 {% endif %}
 
-
+{% if info.get('user_id') != g.user.id %}
+<p style="font-size: 28"><b>{{username}}'s posts:</b></p>
+{% else %}
 <p style="font-size: 28"><b>My posts:</b></p>
+{% endif %}
+
 {% for post in posts[::-1] %}
 <table id="post">
     <tr>

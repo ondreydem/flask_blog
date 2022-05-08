@@ -28,6 +28,10 @@ class Post(db.Model):
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
 
 
+    def get_feed(self):
+        pass
+
+
 class Comments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(200))
