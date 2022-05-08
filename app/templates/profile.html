@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Welcome, {{name}}</h1>
+{% if g.user.is_authenticated and g.user.id == info.get('user_id') %}
+<h1>Welcome, {{username}}</h1>
+{% else %}
+<h1>{{username}}'s profile</h1>
+{% endif %}
 
-{% if g.user.avatar %}
-<img src="{{ url_for('render_avatar', user_id = g.user.id) }}" alt="" width="200px">
+{% if info.get('avatar') %}
+<img src="{{ url_for('render_avatar', user_id = info.get('user_id')) }}" alt="" width="200px">
 {% else %}
 <img src="/static/img/default_avatar.png" alt="" width="130px">
 {% endif %}
@@ -29,15 +33,18 @@
             <td>{{info.get('about')}}</td>
         </tr>
         <tr></tr>
+        {% if g.user.is_authenticated and g.user.id == info.get('user_id') %}
         <tr>
             <td><a href="/profile/edit_profile">Edit profile</a></td>
         </tr>
+        {% endif %}
     </table>
 </div>
 
 
 <hr width="500px" align="left">
 
+{% if g.user.is_authenticated and g.user.id == info.get('user_id') %}
 <form action="/add_post" method="post">
     {{form.hidden_tag()}}
     <table>
@@ -60,9 +67,11 @@
     <div></div>
     <hr align=left width="500px">
 </form>
+{% endif %}
+
 
 <p style="font-size: 28"><b>My posts:</b></p>
-{% for post in posts %}
+{% for post in posts[::-1] %}
 <table id="post">
     <tr>
         <td><i>{{ post.timestamp.strftime("%H:%M %d.%m.%Y") }}</i></td>
@@ -80,7 +89,9 @@
         <td></td>
     </tr>
     <tr>
+        {% if post.comments.all() %}
         <td><b>Comments:</b></td>
+        {% endif %}
     </tr>
     {% for comment in post.comments %}
     <tr>
@@ -88,7 +99,7 @@
             <a href="{{ url_for('profile', user_id=comment.user_id) }}">
                 {{ comment.author.nickname }}
             </a>
-             say's:
+            say's:
         </td>
     </tr>
     <tr>
@@ -96,6 +107,7 @@
     </tr>
     {% endfor %}
     <tr>
+        {% if g.user.is_authenticated %}
         <td>
             <form action="{{url_for('add_comment')}}" method="post">
                 {{comment.hidden_tag()}}
@@ -104,6 +116,7 @@
                 <input type="submit" value="Submit!">
             </form>
         </td>
+        {% endif %}
     </tr>
     <tr>
         <td>

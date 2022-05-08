@@ -33,14 +33,14 @@ def load_user(user_id):
 def login():
     next = request.args.get('next')
     if g.user is not None and g.user.is_authenticated:
-        return redirect(next or url_for('profile'))
+        return redirect(next or url_for('profile', user_id=g.user.id))
     form = LoginForm()
     if form.validate_on_submit():
         try:
             user = User.query.filter_by(email=form.email.data).first()
             if user is not None and check_password_hash(user.password, form.password.data):
                 login_user(user, remember=form.remember_me.data)
-                return redirect(next or url_for('profile'))
+                return redirect(next or url_for('profile', user_id = user.id))
             else:
                 flash('Wrong password or user is not exist')
         except Exception as e:
@@ -54,6 +54,7 @@ def login():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
+
         for email in db.session.query(User.email).all():
             if form.email.data in email:
                 flash('User with this email is already exist')
@@ -73,53 +74,31 @@ def register():
                            form=form)
 
 
-@app.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    form = PostForm()
-    comment = CommentForm()
-    name = g.user.nickname
-    last_seen = g.user.last_seen.strftime("%H:%M %d.%m.%Y")
-    date_of_birth = g.user.date_of_birth.strftime("%d %B %Y")
-    user_info = {'email': g.user.email,
-                 'date_of_birth': date_of_birth,
-                 'about': g.user.about,
-                 'last_seen': last_seen}
-    posts = Post.query.filter_by(user_id=g.user.id).all()
-    return render_template('profile.html',
-                           p_title='Profile',
-                           name=name,
-                           info=user_info,
-                           form=form,
-                           comment=comment,
-                           posts=posts)
-
-
-@app.route('/profile/<int:user_id>')
-def another_profile(user_id):
-    comment = CommentForm()
-    if g.user.is_authenticated and user_id == g.user.id:
-        return redirect(url_for('profile'))
+@app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
+def profile(user_id):
     user = User.query.filter_by(id=user_id).first()
-    username = user.nickname
     posts = user.posts
+    username = user.nickname
+    date_of_birth = user.date_of_birth.strftime("%d %B %Y")
+    comment = CommentForm()
+    form = PostForm()
     if user.last_seen:
         last_seen = user.last_seen.strftime("%H:%M %d.%m.%Y")
     else:
         last_seen = 'Never'
-    date_of_birth = user.date_of_birth.strftime("%d %B %Y")
     user_info = {'email': user.email,
                  'date_of_birth': date_of_birth,
                  'about': user.about,
                  'last_seen': last_seen,
                  'user_id': user.id,
                  'avatar': user.avatar}
-    return render_template('another_profile.html',
-                           p_title=username,
+    return render_template('profile.html',
+                           p_title=f'{username}\'s profile',
                            username=username,
                            posts=posts,
                            info=user_info,
-                           comment=comment)
+                           comment=comment,
+                           form=form)
 
 
 @app.route('/logout')
@@ -141,7 +120,7 @@ def add_post():
                     user_id=g.user.id)
         db.session.add(post)
         db.session.commit()
-    return redirect(url_for('profile'))
+    return redirect(url_for('profile', user_id=g.user.id))
 
 
 @app.route('/profile/edit_profile', methods=['POST', 'GET'])
@@ -159,7 +138,7 @@ def edit_profile():
             user.avatar = avatar
         db.session.add(g.user)
         db.session.commit()
-        return redirect(url_for('profile'))
+        return redirect(url_for('profile', user_id=user.id))
     return render_template('edit_profile.html', form=form)
 
 
