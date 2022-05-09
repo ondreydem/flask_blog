@@ -8,19 +8,3 @@ What features need to realize in blog.app:
 7. Maybe refactor profile pages: collect profile and another_profile in a one view function with condition authentificated/unauthentificated
 8. Post-page with all comments or pagination
 9. Deleting posts (with comments) and comments separately
-
-
-main_page
-
-register
-login
-logout
-
-profile
-render_avatar
-
-add_post
-show_posts
-
-add_comment
-show_comments
