@@ -10,8 +10,10 @@
 
 <table>
     {% for follower in followers %}
+    {% if follower.id != g.user.id %}
     <tr>
-        <td rowspan="2">{% if follower.avatar %}
+        <td rowspan="2">
+            {% if follower.avatar %}
             <img src="{{ url_for('render_avatar', user_id = follower.id) }}" alt="" height="50px">
             {% else %}
             <img src="/static/img/default_avatar.png" alt="" width="130px">
@@ -26,6 +28,7 @@
             <i>{{follower.last_seen.strftime("%H:%M %d.%m.%Y")}}</i>
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
 

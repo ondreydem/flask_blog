@@ -1,7 +1,7 @@
 import datetime
 import sqlite3
 
-from flask import render_template, flash, redirect, url_for, g, request
+from flask import render_template, flash, redirect, url_for, g, request, session
 from flask_login import current_user, login_required, login_user, logout_user
 from app import app, db, lm
 from .forms import LoginForm, RegisterForm, PostForm, EditProfileForm, CommentForm
@@ -10,14 +10,40 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 def get_user_info(user_id):
-    pass
+    user = User.query.filter_by(id=user_id).first()
+    date_of_birth = user.date_of_birth.strftime("%d %B %Y")
+    if user.last_seen:
+        last_seen = user.last_seen.strftime("%H:%M %d.%m.%Y")
+    else:
+        last_seen = 'Never'
+    user_info = {'email': user.email,
+                 'date_of_birth': date_of_birth,
+                 'about': user.about,
+                 'last_seen': last_seen,
+                 'user_id': user.id,
+                 'avatar': user.avatar,
+                 'username': user.nickname}
+    return user_info
+
+
+def get_current_url(page_route):
+    session['current_page'] = page_route
+    print(session.get('current_page'))
+    return session['current_page']
+
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/index', methods=['POST', 'GET'])
 def index():
-    posts = db.session.query(Post).all()
+    get_current_url(request.url)
+    posts = g.user.get_feed()
+    comment = CommentForm()
+    form = PostForm()
     return render_template('index.html',
-                           user=g.user)
+                           user=g.user,
+                           posts=posts,
+                           comment=comment,
+                           form=form)
 
 
 @app.before_request
@@ -81,32 +107,22 @@ def register():
 
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
+    get_current_url(request.url)
     user = User.query.filter_by(id=user_id).first()
-    subscribers = user.followers.count()
+    subscribers = user.followers.count() - 1
     posts = user.posts
     username = user.nickname
-    date_of_birth = user.date_of_birth.strftime("%d %B %Y")
     comment = CommentForm()
     form = PostForm()
-    if user.last_seen:
-        last_seen = user.last_seen.strftime("%H:%M %d.%m.%Y")
-    else:
-        last_seen = 'Never'
-    user_info = {'email': user.email,
-                 'date_of_birth': date_of_birth,
-                 'about': user.about,
-                 'last_seen': last_seen,
-                 'user_id': user.id,
-                 'avatar': user.avatar}
     return render_template('profile.html',
                            p_title=f'{username}\'s profile',
                            username=username,
                            posts=posts,
-                           info=user_info,
+                           info=get_user_info(user_id),
                            comment=comment,
                            form=form,
-                           user=user,
-                           subscribers=subscribers)
+                           subscribers=subscribers,
+                           user=user)
 
 
 @app.route('/logout')
@@ -117,7 +133,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/add_post', methods=['POST'])
+@app.route('/add_post', methods=['POST', 'GET'])
 @login_required
 def add_post():
     form = PostForm()
@@ -132,7 +148,7 @@ def add_post():
         except Exception as e:
             db.session.rollback()
             flash(e, 'danger')
-    return redirect(url_for('profile', user_id=g.user.id))
+    return redirect(session.get('current_page'))
 
 
 @app.route('/profile/edit_profile', methods=['POST', 'GET'])
@@ -164,20 +180,11 @@ def followers(user_id):
     user = User.query.filter_by(id=user_id).first()
     username = user.nickname
     followers = user.followers
-    if user.last_seen:
-        last_seen = user.last_seen.strftime("%H:%M %d.%m.%Y")
-    else:
-        last_seen = 'Never'
-    user_info = {'email': user.email,
-                 'about': user.about,
-                 'last_seen': last_seen,
-                 'user_id': user.id,
-                 'avatar': user.avatar}
     return render_template('followers.html',
                            username=username,
                            user_id=user.id,
                            followers=followers,
-                           info=user_info)
+                           info=get_user_info(user_id))
 
 
 @app.route('/follow/<int:user_id>', methods=['POST'])
@@ -236,7 +243,7 @@ def add_comment():
         except Exception as e:
             db.session.rollback()
             flash(e, 'danger')
-    return redirect(url_for('profile', user_id=author_id))
+    return redirect(session.get('current_page'))
 
 
 # so, is it need..?

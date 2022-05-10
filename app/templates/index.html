@@ -2,8 +2,100 @@
 
 {% block content %}
 <h1>Hello, {{user.nickname}}!</h1>
+
+{% if g.user.is_authenticated %}
+<form action="/add_post" method="post">
+    {{form.hidden_tag()}}
+    <table>
+        <tr>
+            <td style="font-size: 28"><b>Create Post.</b></td>
+        </tr>
+        <tr>
+            <td>Note's itle:</td>
+            <td>{{form.title}}</td>
+        </tr>
+        <tr>
+            <td valign="top">Note's body:</td>
+            <td>{{form.body (cols = 32, rows = 4)}}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Create!">
+        </tr>
+    </table>
+    <div></div>
+    <hr align=left width="500px">
+</form>
+{% endif %}
+
 {% for post in posts %}
-<p>{{post.author.nickname}} says: <b>{{post.body}}</b></p>
+<table>
+    <tr>
+        <td rowspan="2">
+            {% if post.author.avatar %}
+            <img src="{{ url_for('render_avatar', user_id = post.author.id) }}" alt="" height="40px">
+            {% else %}
+            <img src="/static/img/default_avatar.png" alt="" height="40px">
+            {% endif %}
+        </td>
+        <td>
+            <a href="{{url_for('profile', user_id=post.author.id)}}" style="font-size: 20"><b>{{post.author.nickname}}</b></a>
+        </td>
+    </tr>
+    <tr>
+        <td><i>{{ post.timestamp.strftime("%H:%M %d.%m.%Y") }}</i></td>
+    </tr>
+</table>
+
+<table id="post">
+    <tr>
+        <td style="font-size: 20" colspan="3"><b>{{ post.title }}</b></td>
+    </tr>
+    <tr>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="3">{{ post.body }}</td>
+    </tr>
+    <tr>
+        <td></td>
+    </tr>
+    <tr>
+        {% if post.comments.all() %}
+        <td><b>Comments:</b></td>
+        {% endif %}
+    </tr>
+    {% for comment in post.comments %}
+    <tr>
+        <td>In <i>{{comment.timestamp.strftime("%H:%M %d.%m.%Y")}}</i>
+            <a href="{{ url_for('profile', user_id=comment.user_id) }}">
+                {{ comment.author.nickname }}
+            </a>
+            say's:
+        </td>
+    </tr>
+    <tr>
+        <td>«{{comment.body}}»</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        {% if g.user.is_authenticated %}
+        <td>
+            <form action="{{url_for('add_comment')}}" method="post">
+                {{comment.hidden_tag()}}
+                Write something: {{comment.body}}
+                <input type="hidden" value="{{post.id}}" name="post_id">
+                <input type="submit" value="Submit!">
+            </form>
+        </td>
+        {% endif %}
+    </tr>
+    <tr>
+        <td>
+            <hr width="500 px" align="left">
+        </td>
+    </tr>
+</table>
 {% endfor %}
 {% endblock %}
 

@@ -44,8 +44,9 @@ class User(UserMixin, db.Model):
         return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def get_feed(self):
-        return Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
+        followed_posts = Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
             followers.c.user_id == self.id).order_by(Post.timestamp.desc())
+        return followed_posts
 
 
 class Post(db.Model):
