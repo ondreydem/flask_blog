@@ -51,6 +51,7 @@ class User(UserMixin, db.Model):
     def get_followed(self):
         return User.query.join(followers, (followers.c.followed_id == self.id))
 
+
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120))

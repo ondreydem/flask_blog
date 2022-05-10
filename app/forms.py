@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileSize, FileAllowed
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import TextAreaField, PasswordField, SubmitField, StringField, EmailField, BooleanField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
@@ -17,7 +17,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Sign In')
     repeat_password = PasswordField('repeat password',
                                     validators=[DataRequired(),
-                                    EqualTo('password', message='Password must match!')])
+                                                EqualTo('password', message='Password must match!')])
     date_of_birth = DateField('date_of_birth', validators=[DataRequired()])
 
 
@@ -33,5 +33,3 @@ class EditProfileForm(FlaskForm):
 
 class CommentForm(FlaskForm):
     body = StringField('comment', validators=[Length(max=200)])
-
-
