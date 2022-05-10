@@ -179,7 +179,7 @@ def edit_profile():
 def followers(user_id):
     user = User.query.filter_by(id=user_id).first()
     username = user.nickname
-    followers = user.followers
+    followers = user.get_followed()
     return render_template('followers.html',
                            username=username,
                            user_id=user.id,

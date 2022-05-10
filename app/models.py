@@ -48,6 +48,8 @@ class User(UserMixin, db.Model):
             followers.c.user_id == self.id).order_by(Post.timestamp.desc())
         return followed_posts
 
+    def get_followed(self):
+        return User.query.join(followers, (followers.c.followed_id == self.id))
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)

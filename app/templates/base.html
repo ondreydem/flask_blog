@@ -12,7 +12,7 @@
     {% if g.user.is_authenticated %}
     | <a href="{{ url_for('logout') }}">Logout</a>
     | <a href="{{ url_for('profile', user_id=g.user.id) }}">My profile</a>
-    | <a href="{{ url_for('followers', user_id=g.user.id) }}">My followers</a>
+    | <a href="{{ url_for('followers', user_id=g.user.id) }}">My subscribes</a>
     {% else %}
     | <a href="{{ url_for('login') }}">Log in</a>
     {% endif %}
