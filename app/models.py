@@ -4,9 +4,9 @@ from flask_login import UserMixin
 ROLE_USER = 0
 ROLE_ADMIN = 1
 
-
+'''User from left side (column "user_id") is following user from the right side (column "followed_id")'''
 followers = db.Table('followers',
-                     db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
+                     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
                      db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
                      )
 
@@ -25,10 +25,27 @@ class User(UserMixin, db.Model):
     comments = db.relationship('Comments', backref='author', lazy='dynamic')
     followed = db.relationship('User',
                                secondary=followers,
-                               primaryjoin=(followers.c.follower_id),
-                               secondaryjoin=(followers.c.followed_id),
+                               primaryjoin=(followers.c.user_id == id),
+                               secondaryjoin=(followers.c.followed_id == id),
                                backref=db.backref('followers', lazy='dynamic'),
                                lazy='dynamic')
+
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+            return self
+
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+            return self
+
+    def is_following(self, user):
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
+
+    def get_feed(self):
+        return Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
+            followers.c.user_id == self.id).order_by(Post.timestamp.desc())
 
 
 class Post(db.Model):
@@ -39,7 +56,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     comments = db.relationship('Comments', backref='post', lazy='dynamic')
 
-    def get_feed(self):
+    def delete_post(self, post):
         pass
 
 
@@ -49,3 +66,6 @@ class Comments(db.Model):
     timestamp = db.Column(db.DateTime)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def delete_comment(self, comment):
+        pass

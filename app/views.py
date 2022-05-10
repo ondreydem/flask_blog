@@ -1,13 +1,16 @@
 import datetime
 import sqlite3
 
-from flask import render_template, flash, redirect, url_for, g, request, make_response
+from flask import render_template, flash, redirect, url_for, g, request
 from flask_login import current_user, login_required, login_user, logout_user
 from app import app, db, lm
 from .forms import LoginForm, RegisterForm, PostForm, EditProfileForm, CommentForm
-from .models import User, Post, Comments
+from .models import User, Post, Comments, followers
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+def get_user_info(user_id):
+    pass
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/index', methods=['POST', 'GET'])
@@ -40,7 +43,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is not None and check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect(next or url_for('profile', user_id = user.id))
+            return redirect(next or url_for('profile', user_id=user.id))
         else:
             flash('Wrong password or user does not exist')
     return render_template('login.html',
@@ -65,6 +68,8 @@ def register():
                             date_of_birth=form.date_of_birth.data)
                 db.session.add(user)
                 db.session.commit()
+                db.session.add(user.follow(user))
+                db.session.commit()
                 return redirect(request.args.get('next') or url_for('login'))
         except Exception as e:
             db.session.rollback()
@@ -77,6 +82,7 @@ def register():
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
     user = User.query.filter_by(id=user_id).first()
+    subscribers = user.followers.count()
     posts = user.posts
     username = user.nickname
     date_of_birth = user.date_of_birth.strftime("%d %B %Y")
@@ -98,7 +104,9 @@ def profile(user_id):
                            posts=posts,
                            info=user_info,
                            comment=comment,
-                           form=form)
+                           form=form,
+                           user=user,
+                           subscribers=subscribers)
 
 
 @app.route('/logout')
@@ -150,10 +158,58 @@ def edit_profile():
     return render_template('edit_profile.html', form=form)
 
 
-@app.route('/profile/<int:user_id>/subscribe_list')
+@app.route('/profile/<int:user_id>/followers')
 @login_required
-def subscribe_list():
-    pass
+def followers(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    username = user.nickname
+    followers = user.followers
+    if user.last_seen:
+        last_seen = user.last_seen.strftime("%H:%M %d.%m.%Y")
+    else:
+        last_seen = 'Never'
+    user_info = {'email': user.email,
+                 'about': user.about,
+                 'last_seen': last_seen,
+                 'user_id': user.id,
+                 'avatar': user.avatar}
+    return render_template('followers.html',
+                           username=username,
+                           user_id=user.id,
+                           followers=followers,
+                           info=user_info)
+
+
+@app.route('/follow/<int:user_id>', methods=['POST'])
+@login_required
+def follow(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if request.method == 'POST' and current_user.is_following(user) == False:
+        try:
+            subscribe = current_user.follow(user)
+            db.session.add(subscribe)
+            db.session.commit()
+            return redirect(url_for('profile', user_id=user.id))
+        except Exception as e:
+            flash(e, 'danger')
+    flash('something go wrong')
+    return redirect(url_for('profile', user_id=user.id))
+
+
+@app.route('/unfollow/<int:user_id>', methods=['POST'])
+@login_required
+def unfollow(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if request.method == 'POST' and current_user.is_following(user) == True:
+        try:
+            unsubscribe = current_user.unfollow(user)
+            db.session.add(unsubscribe)
+            db.session.commit()
+            return redirect(url_for('profile', user_id=user.id))
+        except Exception as e:
+            flash(e, 'danger')
+    flash('something go wrong')
+    return redirect(url_for('profile', user_id=user.id))
 
 
 @app.route('/render_avatar/<user_id>')
@@ -183,7 +239,7 @@ def add_comment():
     return redirect(url_for('profile', user_id=author_id))
 
 
-#so, is it need..?
+# so, is it need..?
 @app.route('/post/<int:post_id>')
 def post_page(post_id):
     pass

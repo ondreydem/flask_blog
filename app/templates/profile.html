@@ -15,6 +15,12 @@
 
 <div id="profile_info">
     <table>
+        {% if subscribers > 0 %}
+        <tr>
+            <td width="150"><b>{{username}}'s followers: </b></td>
+            <td><a href="{{url_for('followers', user_id=info.get('user_id'))}}">{{subscribers}}</a></td>
+        </tr>
+        {% endif %}
         <tr>
             <td width="120px"><b>Last seen: </b></td>
             <td><i>{{info.get('last_seen')}}</i></td>
@@ -38,6 +44,27 @@
             <td><a href="/profile/edit_profile">Edit profile</a></td>
         </tr>
         {% endif %}
+
+        {% if g.user.id != info.get('user_id') and not g.user.is_following(user) %}
+        <tr>
+        <td>
+            <form action="{{url_for('follow', user_id=info.get('user_id'))}}" method="post">
+            <input type="submit" value="Follow">
+            </form>
+        </td>
+        </tr>
+        {% endif %}
+        {% if g.user.id != info.get('user_id') and g.user.is_following(user) %}
+        <tr>
+        <td>
+            <form action="{{url_for('unfollow', user_id=info.get('user_id'))}}" method="post">
+            <input type="submit" value="Unfollow">
+            </form>
+        </td>
+        </tr>
+        {% endif %}
+
+
     </table>
 </div>
 
