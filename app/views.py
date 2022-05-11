@@ -156,9 +156,13 @@ def add_post():
 def delete_post(post_id):
     post = Post.query.filter_by(id=post_id).first()
     if g.user.is_authenticated and post.author.id == g.user.id:
-        db.session.delete(post)
-        db.session.commit()
-        return redirect(session.get('current_page'))
+        try:
+            db.session.delete(post)
+            db.session.commit()
+            return redirect(session.get('current_page'))
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
 
 
 @app.route('/profile/edit_profile', methods=['POST', 'GET'])
@@ -261,9 +265,13 @@ def add_comment():
 def delete_comment(comment_id):
     comment = Comments.query.filter_by(id=comment_id).first()
     if g.user.is_authenticated and comment.author.id == g.user.id:
-        db.session.delete(comment)
-        db.session.commit()
-        return redirect(session.get('current_page'))
+        try:
+            db.session.delete(comment)
+            db.session.commit()
+            return redirect(session.get('current_page'))
+        except Exception as e:
+            db.session.rollback()
+            flash(e, 'danger')
 
 
 # so, is it need..?
