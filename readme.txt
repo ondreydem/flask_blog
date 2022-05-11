@@ -8,7 +8,7 @@ Features:
 6. Bootstrap?
 7. One-page profile -- DONE!
 8. Post-page with all comments or pagination
-9. Deleting posts (with comments) and comments separately
+9. Deleting posts (with comments) and comments separately -- DONE!
 
 api==0.0.7
 blinker==1.4
