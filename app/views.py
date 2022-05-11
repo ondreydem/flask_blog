@@ -151,6 +151,16 @@ def add_post():
     return redirect(session.get('current_page'))
 
 
+@app.route('/delete/post/<int:post_id>')
+@login_required
+def delete_post(post_id):
+    post = Post.query.filter_by(id=post_id).first()
+    if g.user.is_authenticated and post.author.id == g.user.id:
+        db.session.delete(post)
+        db.session.commit()
+        return redirect(session.get('current_page'))
+
+
 @app.route('/profile/edit_profile', methods=['POST', 'GET'])
 @login_required
 def edit_profile():
@@ -244,6 +254,16 @@ def add_comment():
             db.session.rollback()
             flash(e, 'danger')
     return redirect(session.get('current_page'))
+
+
+@app.route('/delete/comment/<int:comment_id>')
+@login_required
+def delete_comment(comment_id):
+    comment = Comments.query.filter_by(id=comment_id).first()
+    if g.user.is_authenticated and comment.author.id == g.user.id:
+        db.session.delete(comment)
+        db.session.commit()
+        return redirect(session.get('current_page'))
 
 
 # so, is it need..?

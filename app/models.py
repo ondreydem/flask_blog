@@ -58,10 +58,7 @@ class Post(db.Model):
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    comments = db.relationship('Comments', backref='post', lazy='dynamic')
-
-    def delete_post(self, post):
-        pass
+    comments = db.relationship('Comments', backref='post', lazy='dynamic', cascade='all, delete')
 
 
 class Comments(db.Model):
@@ -71,5 +68,5 @@ class Comments(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    def delete_comment(self, comment):
+    def delete_comment(self, comment_id):
         pass
