@@ -36,14 +36,17 @@ def get_current_url(page_route):
 @app.route('/index', methods=['POST', 'GET'])
 def index():
     get_current_url(request.url)
-    posts = g.user.get_feed()
-    comment = CommentForm()
-    form = PostForm()
-    return render_template('index.html',
-                           user=g.user,
-                           posts=posts,
-                           comment=comment,
-                           form=form)
+    if g.user.is_authenticated:
+        posts = g.user.get_feed()
+        comment = CommentForm()
+        form = PostForm()
+        return render_template('index.html',
+                               user=g.user,
+                               posts=posts,
+                               comment=comment,
+                               form=form)
+    else:
+        return redirect(url_for('login'))
 
 
 @app.before_request
