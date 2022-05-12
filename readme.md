@@ -11,6 +11,12 @@ There is small web application for publishing personal notes and opinion. Users 
 7. Following and unfollowing other users, see list of following users.
 8. Get feed of following users.
 
+_db creating automatically_  
+_There are 3 example users_  
+_Logins: andrey@gmail.com, sergey@gmail.com, nastya@gmail.com_  
+_Password (one for all): 123_
+
+
 ## Technologies
 * Python 3.9
 * Flask, WTForms
