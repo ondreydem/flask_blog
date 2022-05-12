@@ -10,6 +10,7 @@ Features:
 8. Post-page with all comments or pagination
 9. Deleting posts (with comments) and comments separately -- DONE!
 
+
 api==0.0.7
 blinker==1.4
 certifi==2021.10.8

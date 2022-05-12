@@ -67,6 +67,3 @@ class Comments(db.Model):
     timestamp = db.Column(db.DateTime)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-
-    def delete_comment(self, comment_id):
-        pass

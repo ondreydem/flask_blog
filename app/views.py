@@ -5,8 +5,9 @@ from flask import render_template, flash, redirect, url_for, g, request, session
 from flask_login import current_user, login_required, login_user, logout_user
 from app import app, db, lm
 from .forms import LoginForm, RegisterForm, PostForm, EditProfileForm, CommentForm
-from .models import User, Post, Comments, followers
+from .models import User, Post, Comments
 from werkzeug.security import generate_password_hash, check_password_hash
+from config import POST_PER_PAGE
 
 
 def get_user_info(user_id):
@@ -34,10 +35,11 @@ def get_current_url(page_route):
 
 @app.route('/', methods=['POST', 'GET'])
 @app.route('/index', methods=['POST', 'GET'])
-def index():
+@app.route('/index/<int:page>', methods=['POST', 'GET'])
+def index(page=1):
     get_current_url(request.url)
     if g.user.is_authenticated:
-        posts = g.user.get_feed()
+        posts = g.user.get_feed().paginate(page, POST_PER_PAGE, False)
         comment = CommentForm()
         form = PostForm()
         return render_template('index.html',
@@ -109,11 +111,13 @@ def register():
 
 
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
-def profile(user_id):
+@app.route('/profile/<int:user_id>/<int:page>', methods=['GET', 'POST'])
+@login_required
+def profile(user_id, page=1):
     get_current_url(request.url)
     user = User.query.filter_by(id=user_id).first()
     subscribers = user.followers.count() - 1
-    posts = user.posts
+    posts = user.posts.paginate(page, POST_PER_PAGE, False)
     username = user.nickname
     comment = CommentForm()
     form = PostForm()
@@ -236,6 +240,7 @@ def unfollow(user_id):
     return redirect(url_for('profile', user_id=user.id))
 
 
+@login_required
 @app.route('/render_avatar/<user_id>')
 def render_avatar(user_id):
     user = User.query.filter_by(id=user_id).first()

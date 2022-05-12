@@ -102,7 +102,7 @@
 <p style="font-size: 28"><b>My posts:</b></p>
 {% endif %}
 
-{% for post in posts[::-1] %}
+{% for post in posts.items[::-1] %}
 <table id="post">
     <tr>
         <td><i>{{ post.timestamp.strftime("%H:%M %d.%m.%Y") }}</i></td>
@@ -158,5 +158,6 @@
 </table>
 
 {% endfor %}
-
+{% if posts.has_prev %}<a href="{{ url_for('profile',user_id = info.get('user_id'), page = posts.prev_num) }}">Prev page</a>{% endif %}
+{% if posts.has_next %}<a href="{{ url_for('index',user_id = info.get('user_id'), page = posts.next_num) }}">Next page</a>{% endif %}
 {% endblock %}
